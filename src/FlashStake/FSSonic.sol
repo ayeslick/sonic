@@ -16,23 +16,25 @@ contract FSSonic {
         0x6e5eD1A5901E81F6bC008023d766454D831B6617;
     address private constant flashNFT =
         0x3b090839C26fE3b2BdfA2F4CD7F3ab001ccdF73F;
-    // address private constant USDC_FTokenAddress =
-    //     0x32EA96F6f2985bD38e4dAC3bC08156198Bc2324d;
+    address private constant USDC_FTokenAddress =
+        0x32EA96F6f2985bD38e4dAC3bC08156198Bc2324d;
     uint256 private stakeDuration = 63072000; //2 years
-    bool mint = true;
+    bool mint = true; //for stake
 
     address public immutable feeAddress;
-    address public immutable sncFlash;
+    address public immutable sncUSDC;
     address public immutable treasury;
 
     constructor(
         address _feeAddress,
-        address _sncFlash,
+        address _sncUSDC,
         address _treasury
     ) {
         feeAddress = _feeAddress;
-        sncFlash = _sncFlash;
+        sncUSDC = _sncUSDC;
         treasury = _treasury;
+        IERC20(USDC).approve(treasury, 0);
+        IERC20(USDC).approve(treasury, type(uint256).max);
     }
 
     struct Deposit {
@@ -52,7 +54,7 @@ contract FSSonic {
     //use the one view function to gain access to the stake mapping
     //do this after checking that msg.sender is the current owner of FlashNFT
 
-    function depositFlashNFTForsncFlash(uint256 id) external {
+    function depositFlashNFTForsncUSDC(uint256 id) external {
         address sender = msg.sender;
 
         address currentOwner = IERC721(flashNFT).ownerOf(id);
@@ -69,10 +71,12 @@ contract FSSonic {
             stake.totalFTokenBurned == 0 && stake.totalStakedWithdrawn == 0,
             "Cannot use due to previous withdraw"
         );
+        
         require(
             stake.strategyAddress == flashUSDCStrat,
             "Strategy not accepted here"
         );
+        //check this. This will break composibility. No sure if its needed.
         require(
             stake.stakeStartTs < block.timestamp,
             "Created in the same block"
@@ -92,15 +96,44 @@ contract FSSonic {
         uint256 sendersAmount = stakedAmount - fee;
 
         //mint to treasury then sender
-        ISNCFlash(sncFlash).mint(treasury, mintAmountForTreasury);
-        ISNCFlash(sncFlash).mint(sender, sendersAmount);
-
-        //approve then transfer fee & flashNFT from sender to treasury
-        IERC20(USDC).approve(treasury, 0);
-        IERC20(USDC).approve(treasury, type(uint256).max);
+        ISNCFlash(sncUSDC).mint(treasury, mintAmountForTreasury);
+        ISNCFlash(sncUSDC).mint(sender, sendersAmount);
 
         IERC20(USDC).transferFrom(sender, treasury, fee);
         IERC721(flashNFT).transferFrom(sender, treasury, id);
+    }
+
+    
+    function depositUSDCForsncUSDC(uint256 amount, uint256 minimumReceived) external {
+        address customer = msg.sender;
+        uint256 initialAmount = IERC20(USDC).balanceOf(address(this));
+        IERC20(USDC).transferFrom(customer, address(this), amount);
+        uint256 afterTransfer = IERC20(USDC).balanceOf(address(this));
+
+        uint256 beforeFees = afterTransfer - initialAmount;
+        require(beforeFees > 0, "Nothing Transfered");
+
+        uint256 fee = IFee(feeAddress).fees(beforeFees); //1% fee
+
+        //stake and save the information to the deposits mapping
+        //assess the amount of ftokens before and after the staking
+        //burn the difference and mint to the customer and treasury respectively after taking fees
+
+        //sends yield back in USDC
+        //do not use this.
+        //need to build a similar function here.
+
+        // IFlashStake(FlashStake).flashStake(
+        //     flashUSDCStrat,
+        //     flashStakeAmount,
+        //     stakeDuration,
+        //     minimumReceived,
+        //     address(this),
+        //     mint
+        // );
+
+        
+
     }
 
     //have a function to rescue tokens into the treasury?
@@ -113,6 +146,7 @@ contract FSSonic {
     //because I dont know my stakeId.
     //A solution to finding my stakeIds is real hacky.
     //Just accept FlashNFTs
+
     // function depositToReceiveSonic(uint256 amount, uint256 minimumReceived)
     //     external
     // {

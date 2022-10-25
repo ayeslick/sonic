@@ -16,6 +16,9 @@ interface IFlashStake {
         uint256 totalStakedWithdrawn;
     }
 
+    //add stake
+    //remove flashStake
+
     function flashStake(
         address _strategyAddress,
         uint256 _tokenAmount,

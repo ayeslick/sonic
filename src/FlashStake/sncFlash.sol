@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 //Owned by FSSonic
-contract sncFlash is ERC20, Ownable {
-    constructor() ERC20("Sonic USDC", "sncFlash") {}
+contract sncUSDC is ERC20, Ownable {
+    constructor() ERC20("Sonic USDC", "sncUSDC") {}
 
     function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
