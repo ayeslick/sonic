@@ -50,6 +50,7 @@ contract FSSonic {
     }
 
     mapping(uint256 => Deposit) public deposits;
+    
 
     function _flashStake() internal {}
 
