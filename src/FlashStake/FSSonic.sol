@@ -52,7 +52,7 @@ contract FSSonic {
     mapping(uint256 => Deposit) public deposits;
     
 
-    function _flashStake() internal {}
+    function _flashStake(uint256 amount, uint256 minimumReceived) internal {}
 
 
     function depositToReceiveSONICs(uint256 amount, uint256 minimumReceived)
@@ -72,7 +72,7 @@ contract FSSonic {
 
         //local flashStake 
         //send yield to the customer
-        _flashStake();
+        _flashStake(flashStakeAmount, minimumReceived);
 
     }
 }
