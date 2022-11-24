@@ -62,10 +62,13 @@ contract FSSonic {
 
     function _checkDepositNFT(uint256 nftId) internal view {}
 
+    function _mintSONICs(uint256 amount) internal {}
 
-    function depositERC20ToReceiveSONICs(uint256 amount, uint256 minimumReceived, address yieldTo) external 
+    function depositERC20ToReceiveSONICs(uint256 amount, uint256 minimumReceived, uint256 nftId, address yieldTo) external 
     {
         address sender = msg.sender;
+        _checkDepositNFT(nftId);
+
         uint256 initialAmount = IERC20(USDC).balanceOf(address(this));
         IERC20(USDC).transferFrom(sender, address(this), amount);
         uint256 afterTransfer = IERC20(USDC).balanceOf(address(this));
@@ -73,11 +76,12 @@ contract FSSonic {
          uint256 flashStakeAmount = afterTransfer - initialAmount;
         require(flashStakeAmount > 0, "Nothing Transfered");
 
+        //mint SONICs
+        _mintSONICs(flashStakeAmount);
 
         //create a local function that mimics flashStake
         //local flashStake 
         //send yield to the customer
         _flashStake(flashStakeAmount, minimumReceived, yieldTo);
-
     }
 }
