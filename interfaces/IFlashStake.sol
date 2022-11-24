@@ -16,18 +16,15 @@ interface IFlashStake {
         uint256 totalStakedWithdrawn;
     }
 
-    //add stake
-    //remove flashStake
-
-    function flashStake(
+    function stake(
         address _strategyAddress,
         uint256 _tokenAmount,
         uint256 _stakeDuration,
-        uint256 _minimumReceived,
-        address _yieldTo,
-        bool _mintNFT
-    ) external;
+        address _fTokensTo,
+        bool _issueNFT
+    )  external returns (StakeStruct memory);
 
+    
     function getStakeInfo(uint256 _id, bool _isNFT)
         external
         view

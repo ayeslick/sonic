@@ -12,7 +12,7 @@ contract FSSonic {
     address private constant FlashStake =
         0x78b2d65dd1d3d9Fb2972d7Ef467261Ca101EC2B9;
     
-    // temp hardcoding
+    // hardcoding
     address private constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address private constant flashUSDCStrat =
         0x6e5eD1A5901E81F6bC008023d766454D831B6617;
@@ -52,10 +52,17 @@ contract FSSonic {
     mapping(uint256 => Deposit) public deposits;
     
 
-    function _flashStake(uint256 amount, uint256 minimumReceived) internal {}
+    function _flashStake(uint256 amount, uint256 minimumReceived) internal {
+        IFlashStake.StakeStruct memory local = IFlashStake(FlashStake).stake(flashUSDCStrat, amount, stakeDuration, address(this), mint);
+        require(local.fTokensToUser >= minimumReceived, "FSSonic: Insufficient fTokens received");
+        deposits[local.nftId] = Deposit(local.nftId, local.strategyAddress, local.stakeStartTs, local.stakeDuration, local.stakedAmount, local.fTokensToUser);
+    
+    }
+
+    function _checkDepositNFT(uint256 nftId) internal view {}
 
 
-    function depositToReceiveSONICs(uint256 amount, uint256 minimumReceived)
+    function depositERC20ToReceiveSONICs(uint256 amount, uint256 minimumReceived)
         external
     {
         address sender = msg.sender;
