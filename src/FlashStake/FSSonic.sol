@@ -51,6 +51,8 @@ contract FSSonic {
     }
 
     mapping(uint256 => Deposit) public deposits;
+    //make an array for deposits?
+    //would make it easier to iterate over deposits to redeem
     
 
     function _flashStake(uint256 amount, uint256 minimumReceived, address yieldTo) internal {
@@ -74,7 +76,7 @@ contract FSSonic {
         uint256 afterTransfer = IERC20(USDC).balanceOf(address(this));
 
          uint256 flashStakeAmount = afterTransfer - initialAmount;
-        require(flashStakeAmount > 0, "Nothing Transfered");
+        require(flashStakeAmount > 0, "Nothing Transfered"); //use custom error
 
         //mint SONICs
         _mintSONICs(flashStakeAmount);
