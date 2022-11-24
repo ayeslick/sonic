@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import {IFlashStake} from "../../interfaces/IFlashStake.sol";
+import {IFlashStrategy} from "../../interfaces/IFlashStrategy.sol";
 import {ISNCFlash} from "../../interfaces/ISNCFlash.sol";
 
 contract FSSonic {
@@ -52,18 +53,17 @@ contract FSSonic {
     mapping(uint256 => Deposit) public deposits;
     
 
-    function _flashStake(uint256 amount, uint256 minimumReceived) internal {
+    function _flashStake(uint256 amount, uint256 minimumReceived, address yieldTo) internal {
         IFlashStake.StakeStruct memory local = IFlashStake(FlashStake).stake(flashUSDCStrat, amount, stakeDuration, address(this), mint);
-        require(local.fTokensToUser >= minimumReceived, "FSSonic: Insufficient fTokens received");
         deposits[local.nftId] = Deposit(local.nftId, local.strategyAddress, local.stakeStartTs, local.stakeDuration, local.stakedAmount, local.fTokensToUser);
-    
+        IERC20(USDC_FTokenAddress).approve(local.strategyAddress, local.fTokensToUser);
+        IFlashStrategy(local.strategyAddress).burnFToken(local.fTokensToUser, minimumReceived, yieldTo); 
     }
 
     function _checkDepositNFT(uint256 nftId) internal view {}
 
 
-    function depositERC20ToReceiveSONICs(uint256 amount, uint256 minimumReceived)
-        external
+    function depositERC20ToReceiveSONICs(uint256 amount, uint256 minimumReceived, address yieldTo) external 
     {
         address sender = msg.sender;
         uint256 initialAmount = IERC20(USDC).balanceOf(address(this));
@@ -75,11 +75,9 @@ contract FSSonic {
 
 
         //create a local function that mimics flashStake
-        //sends yield back in USDC
-
         //local flashStake 
         //send yield to the customer
-        _flashStake(flashStakeAmount, minimumReceived);
+        _flashStake(flashStakeAmount, minimumReceived, yieldTo);
 
     }
 }
